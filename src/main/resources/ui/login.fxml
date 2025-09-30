@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="ui.LoginController"
+      spacing="10" alignment="CENTER" style="-fx-padding: 20;">
+    <Label text="Secure Mail Login" style="-fx-font-size: 16;" />
+    <TextField fx:id="txtEmail" promptText="Email (ví dụ: user@gmail.com)" />
+    <PasswordField fx:id="txtPassword" promptText="App Password (16 ký tự)" />
+    <Button text="Login" onAction="#handleLogin" />
+</VBox>
