@@ -17,18 +17,15 @@ public class ComposeController {
     private void handleSend(ActionEvent event) {
         try {
             MailClient.sendMail(
-                    MainController.getSmtpHost(),
-                    MainController.getSmtpPort(),   // lấy từ MainController
-                    MainController.getEmail(),
-                    MainController.getPassword(),
                     MainController.getEmail(),
                     txtTo.getText(),
                     txtSubject.getText(),
                     txtBody.getText()
             );
+
             Alert ok = new Alert(Alert.AlertType.INFORMATION);
             ok.setHeaderText(null);
-            ok.setContentText("Mail đã được gửi thành công!");
+            ok.setContentText("Mail đã gửi thành công!");
             ok.showAndWait();
         } catch (Exception e) {
             e.printStackTrace();
