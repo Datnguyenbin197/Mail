@@ -1,20 +1,26 @@
 package mail;
 
-import com.icegreen.greenmail.util.GreenMail;
-import com.icegreen.greenmail.util.ServerSetup;
-import jakarta.mail.*;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Logger;
+
+import com.icegreen.greenmail.util.GreenMail;
+import com.icegreen.greenmail.util.ServerSetup;
+
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.Session;
+import jakarta.mail.Store;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 
 /**
  * MailClient demo local (GreenMail)
  */
 public class MailClient {
-
+    private static final Logger logger = Logger.getLogger(MailClient.class.getName());
     private static GreenMail greenMail;
 
     public static void startDemoServer() {
@@ -28,7 +34,7 @@ public class MailClient {
         greenMail.setUser("user1@localhost", "user1", "password1");
         greenMail.setUser("user2@localhost", "user2", "password2");
 
-        System.out.println("Demo Mail Server started (user1/password1, user2/password2)");
+        logger.info("Demo Mail Server started (user1/password1, user2/password2)");
     }
 
     public static void sendMail(String from, String to, String subject, String body) throws Exception {
@@ -47,7 +53,7 @@ public class MailClient {
         msg.setText(body);
 
         Transport.send(msg);
-        System.out.println("Mail sent: " + from + " -> " + to + " [" + subject + "]");
+        logger.info(() -> "Mail sent: " + from + " -> " + to + " [" + subject + "]");
     }
 
     public static List<Message> fetchInbox(String user, String password) throws Exception {
@@ -59,18 +65,21 @@ public class MailClient {
         props.put("mail.imap.ssl.enable", "false");
 
         Session session = Session.getInstance(props);
-        Store store = session.getStore("imap");
-        store.connect("localhost", user, password);
+        
+        // Use try-with-resources for proper resource management
+        try (Store store = session.getStore("imap")) {
+            store.connect("localhost", user, password);
+            
+            try (Folder inbox = store.getFolder("INBOX")) {
+                inbox.open(Folder.READ_ONLY);
+                Message[] messages = inbox.getMessages();
 
-        Folder inbox = store.getFolder("INBOX");
-        inbox.open(Folder.READ_ONLY);
-        Message[] messages = inbox.getMessages();
-
-        List<Message> result = new ArrayList<>();
-        for (Message m : messages) result.add(m);
-
-        inbox.close(false);
-        store.close();
-        return result;
+                // Use Collections.addAll instead of manual array copy
+                List<Message> result = new ArrayList<>();
+                java.util.Collections.addAll(result, messages);
+                
+                return result;
+            }
+        }
     }
 }

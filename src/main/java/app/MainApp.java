@@ -1,31 +1,74 @@
 package app;
 
-import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
+import java.util.logging.Logger;
 
-public class MainApp extends Application {
-    private static Stage primaryStage;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        primaryStage = stage;
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/login.fxml"));
-        Scene scene = new Scene(loader.load());
-        stage.setTitle("Secure Mail Client");
-        stage.setScene(scene);
-        stage.show();
-    }
+import mail.MockMailClient;
+import ui.LoginPanel;
+import ui.MainApplication;
 
-    public static void setRoot(String fxml) throws Exception {
-        FXMLLoader loader = new FXMLLoader(MainApp.class.getResource("/ui/" + fxml));
-        Scene scene = new Scene(loader.load());
-        primaryStage.setScene(scene);
-        // không cần gọi lại primaryStage.show();
-    }
+public class MainApp {
+    private static final Logger logger = Logger.getLogger(MainApp.class.getName());
+    private static JFrame loginFrame;
+    private static MainApplication mainApplication;
 
     public static void main(String[] args) {
-        launch();
+        // Set system look and feel
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
+            logger.warning(() -> "Could not set system look and feel: " + e.getMessage());
+        }
+
+        // Start demo mail server
+        try {
+            MockMailClient.startDemoServer();
+        } catch (Exception e) {
+            logger.severe(() -> "Failed to start demo mail server: " + e.getMessage());
+            JOptionPane.showMessageDialog(null, 
+                "Failed to start mail server: " + e.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Show login window
+        showLoginWindow();
+    }
+
+    private static void showLoginWindow() {
+        loginFrame = new JFrame("Secure Mail Login");
+        loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        loginFrame.setSize(400, 300);
+        loginFrame.setLocationRelativeTo(null);
+        loginFrame.setResizable(false);
+
+        LoginPanel loginPanel = new LoginPanel(new LoginPanel.LoginCallback() {
+            @Override
+            public void onLoginSuccess() {
+                loginFrame.dispose();
+                showMainApplication();
+            }
+
+            @Override
+            public void onLoginError(String message) {
+                // Error already shown in LoginPanel
+            }
+        });
+
+        loginFrame.add(loginPanel);
+        loginFrame.setVisible(true);
+    }
+
+    private static void showMainApplication() {
+        SwingUtilities.invokeLater(() -> {
+            mainApplication = new MainApplication();
+            mainApplication.showApplication();
+        });
     }
 }
